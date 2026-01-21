@@ -34,6 +34,7 @@ def handle_choices(choice, state):
                 return True  # Exit program loop
             case _:
                 print('Invalid input, please enter a valid choice.')
+    
     return False
 
 

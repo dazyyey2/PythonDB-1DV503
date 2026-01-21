@@ -11,6 +11,7 @@ def authenticate_db(username, password, db_name):
     return db
 
 
+# Hash and salt password
 def hash_password(password):
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
@@ -18,15 +19,42 @@ def hash_password(password):
 
 
 def login(email, password, state):
-    state['authenticated'] = True
+    # Check for empty inputs
+    if email is None or email.strip() == '':
+        print('Email cannot be empty!')
+        return
+    if password is None or password.strip() == '':
+        print('Password cannot be empty!')
+        return
+    # Get password hash from database
+    query = '''SELECT pwd_hash FROM users WHERE users.email=%s;'''
+    result = state['db'].execute_with_fetchall(query, [email])
+    # If no results, no user with that email exists
+    if not result:
+        print(f'No user with email address {email}')
+        return
+    hashed_password = result[0][0]
+    # Compare the hashed password from database to given password
+    if bcrypt.checkpw(password.encode('utf-8'),
+                      hashed_password.encode('utf-8')):
+        # After successful authentication, save user_id
+        query = '''SELECT user_id FROM users WHERE users.email=%s;'''
+        user_id = state['db'].execute_with_fetchall(query, [email])
+        state['user_id'] = user_id[0][0]
+        # Switch authenticated flag
+        state['authenticated'] = True
+        print('Successfully authenticated!')
+    else:
+        print('Incorrect password, please try again.')
     return
 
 
+# Validate user input and create new user in database
 def create_user(fname, lname, street, city,
                 postal_code, phone, email, password, state):
-    # Validate inputs
     failed_checks = False
     not_nullable = (fname, lname, street, city, postal_code, email, password)
+    # Validate all inputs that cannot be empty
     for i in range(0, len(not_nullable)):
         if not_nullable[i] is None or not_nullable[i].strip() == '':
             if i == 0:
@@ -50,8 +78,8 @@ def create_user(fname, lname, street, city,
             if i == 6:
                 print('Password cannot be empty!')
                 failed_checks = True
-    password = hash_password(password)  # Encrypt password
-    # Check for duplicate email address
+    password = hash_password(password)  # Hash and salt password
+    # Check if email address already exists in database
     query = '''SELECT email FROM users WHERE users.email=%s;'''
     result = state['db'].execute_with_fetchall(query, [email])
     if result:
@@ -61,7 +89,7 @@ def create_user(fname, lname, street, city,
     if failed_checks is True:
         return
     try:
-        # Create user in database
+        # If input validation is successful, create user in database
         query = '''INSERT INTO users (first_name, last_name, street, city,
                 postal_code, phone_no, email, pwd_hash)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'''
@@ -69,6 +97,6 @@ def create_user(fname, lname, street, city,
                                                 postal_code, phone,
                                                 email, password))
     except Exception as e:
-        print(e)
+        print('Error creating user: ', e)
     print('Registration successful. Please login from main menu.')
     return
