@@ -14,7 +14,6 @@ def handle_choices(choice, state):
                 email = input('Enter email: ')
                 password = getpass('Enter password: ')
                 auth.login(email, password, state)
-                return False
             # User registration
             case '2':
                 print('== Welcome to the Online Boardgame Shop ==')
@@ -29,13 +28,32 @@ def handle_choices(choice, state):
                 password = getpass('Enter password: ')
                 auth.create_user(fname, lname, street, city,
                                  postal_code, phone, email, password, state)
-                return False
             case 'q':
                 return True  # Exit program loop
             case _:
                 print('Invalid input, please enter a valid choice.')
-    
-    return False
+    # Post authentication choices
+    elif state['authenticated'] is True:
+        match choice:
+            # Browse by genre
+            case '1':
+                menu.browse_by_genres(state)
+            # Search by designer/title
+            case '2':
+                return
+            # View cart
+            case '3':
+                return
+            # Checkout
+            case '4':
+                return
+            # Log out
+            case '5':
+                state['authenticated'] = False
+                state['user_id'] = None
+            case _:
+                print('Invalid input, please enter a valid choice.')
+    return False  # Continue program loop
 
 
 def get_database():
