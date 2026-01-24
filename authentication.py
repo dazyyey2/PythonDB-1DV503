@@ -98,5 +98,6 @@ def create_user(fname, lname, street, city,
                                                 email, password))
     except Exception as e:
         print('Error creating user: ', e)
+        return
     print('Registration successful. Please login from main menu.')
     return
