@@ -3,7 +3,7 @@ from getpass import getpass
 import menu
 
 
-def add_to_cart(user_id, game_id, quantity):
+def add_to_cart(user_id, game_id, quantity, state):
     # Find current quantity of game in cart
     query = (''' SELECT cart.quantity FROM cart '''
              '''WHERE cart.user_id=%s AND cart.game_id=%s; ''')
@@ -60,10 +60,13 @@ def handle_choices(choice, state):
                 game_id, quantity = menu.browse_by_genres(state)
                 if (game_id.strip() != '' and quantity != 0
                         and quantity is not None):
-                    add_to_cart(state['user_id'], game_id, quantity)
+                    add_to_cart(state['user_id'], game_id, quantity, state)
             # Search by designer/title
             case '2':
-                return
+                game_id, quantity = menu.search_for_game(state)
+                if (game_id.strip() != '' and quantity != 0
+                        and quantity is not None):
+                    add_to_cart(state['user_id'], game_id, quantity, state)
             # View cart
             case '3':
                 return
@@ -79,7 +82,7 @@ def handle_choices(choice, state):
     return False  # Continue program loop
 
 
-def get_database():
+def get_database(state):
     print('----------------------------------')
     print('Please enter database credentials')
     print('----------------------------------')
@@ -98,7 +101,7 @@ if __name__ == '__main__':
     state['authenticated'] = False
     state['user_id'] = None
     # Establish database connection
-    get_database()
+    get_database(state)
     # Main program loop
     exit_boolean = False
     while exit_boolean is False:
